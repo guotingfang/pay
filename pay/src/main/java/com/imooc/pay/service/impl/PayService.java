@@ -5,9 +5,11 @@ import com.lly835.bestpay.config.WxPayConfig;
 import com.lly835.bestpay.enums.BestPayTypeEnum;
 import com.lly835.bestpay.model.PayRequest;
 import com.lly835.bestpay.model.PayResponse;
+import com.lly835.bestpay.service.BestPayService;
 import com.lly835.bestpay.service.impl.BestPayServiceImpl;
 import com.sun.deploy.panel.IProperty;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -22,19 +24,13 @@ import java.math.BigDecimal;
 @Service
 public class PayService implements IPayservice {
 
+    @Autowired
+    private BestPayService bestPayService;
 
     @Override
     public PayResponse create(String orderId, BigDecimal amount) {
-        WxPayConfig wxPayConfig = new WxPayConfig();
-        wxPayConfig.setAppId("wxd898fcb01713c658");
-        wxPayConfig.setMchId("1483469312");
-        wxPayConfig.setMchKey("098F6BCD4621D373CADE4E832627B4F6");
-        wxPayConfig.setNotifyUrl("http://127.0.0.1");
-        BestPayServiceImpl bestPayService = new BestPayServiceImpl();
-        bestPayService.setWxPayConfig(wxPayConfig);
-
         PayRequest request = new PayRequest();
-        request.setOrderName("7743843-111111111111111");
+        request.setOrderName("7743843-11sgghffg51");
         request.setOrderId(orderId);
         request.setOrderAmount(amount.doubleValue());
         request.setPayTypeEnum(BestPayTypeEnum.WXPAY_NATIVE);
@@ -42,5 +38,22 @@ public class PayService implements IPayservice {
         PayResponse response = bestPayService.pay(request);
         log.info("response={}",response);
         return response;
+    }
+
+    @Override
+    public String asyncNotify(String notifyData) {
+//        1.签名检验
+        PayResponse payResponse = bestPayService.asyncNotify(notifyData);
+        log.info("payRespinse={}",payResponse);
+
+//        2.金额校验（从数据库查订单）
+
+//        3.修改订单支付状态
+
+//        4.告诉微信不要在通知了
+        return "<xml>\n" +
+                "  <return_code><![CDATA[SUCCESS]]></return_code>\n" +
+                "  <return_msg><![CDATA[OK]]></return_msg>\n" +
+                "</xml>";
     }
 }
