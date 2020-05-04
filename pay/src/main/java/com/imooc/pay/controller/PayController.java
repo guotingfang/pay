@@ -1,6 +1,8 @@
 package com.imooc.pay.controller;
 
+import com.imooc.pay.pojo.PayInfo;
 import com.imooc.pay.service.IPayservice;
+import com.lly835.bestpay.config.WxPayConfig;
 import com.lly835.bestpay.enums.BestPayTypeEnum;
 import com.lly835.bestpay.model.PayResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +27,8 @@ public class PayController {
 
     @Autowired
     private IPayservice payservice;
+    @Autowired
+    private WxPayConfig wxPayConfig;
 
     @GetMapping("/create")
     public ModelAndView create(@RequestParam("orderId") String orderId,
@@ -34,8 +38,10 @@ public class PayController {
         PayResponse response = payservice.create(orderId, amount,bestPayTypeEnum);
         Map<String, String> map = new HashMap<>();
 //        支付方式不同渲染就不同WXPAY_NATIVE 使用codeUrl ，ALIPAY_PC使用body
-        if (bestPayTypeEnum == BestPayTypeEnum.WXPAY_NATIVE){
-            map.put("codeUrl", response.getCodeUrl());
+            if (bestPayTypeEnum == BestPayTypeEnum.WXPAY_NATIVE){
+                map.put("codeUrl", response.getCodeUrl());
+                map.put("orderId",orderId);
+                map.put("returnUrl",wxPayConfig.getReturnUrl());
             return new ModelAndView("createForWxNative",map);
         }else if (bestPayTypeEnum == BestPayTypeEnum.ALIPAY_PC){
             map.put("body", response.getBody());
@@ -49,5 +55,11 @@ public class PayController {
     @ResponseBody
     public String  asyncNotify(@RequestBody String notifyDate){
         return payservice.asyncNotify(notifyDate);
+    }
+
+    @GetMapping("/queryByOrderId")
+    @ResponseBody
+    public PayInfo queryPayInfoByOrderId(@RequestParam("orderId") String orderId){
+        return payservice.queryByOrderId(orderId);
     }
 }
